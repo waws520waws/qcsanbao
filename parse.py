@@ -88,16 +88,29 @@ class Parse(object):
         """
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".formTable tr")[6:10]
+        tr_car_name = soup.select(".formTable tr")[2].select("td")[1].get_text()
+        tr_car_type = soup.select(".formTable tr")[2].select("td")[3].get_text()
         base_url = "https://sanbaobeian.dpac.org.cn"
         for tr in tr_list:
             try:
                 href = tr.select("a")[0].get("href").split("'")[1]
                 pdf_url = base_url + href
+                pdf_url = tr_car_name + "#@#" + tr_car_type + "#@#" + pdf_url
                 if r.sadd("all_pdf_url_list",pdf_url):
                     r.sadd("pdf_url_list",pdf_url)
             except:
                 href = ""
         return r
+
+if __name__ == '__main__':
+    import tools
+    from download import Download
+    r = tools.get_redis_connect()
+    par = Parse()
+    url ="https://www.qcsanbao.cn/webqcba/ThreeServlet?method=getThree&author=11e3-0f9b-fd29a81b-9506-b9174d954819&qualityClauseName=CAFTQC%E8%B4%A8%E9%87%8F%E6%8B%85%E4%BF%9D%E6%9D%A1%E6%AC%BE20200317001&brand=%E9%95%BF%E5%AE%89%E7%A6%8F%E7%89%B9&vehiceSeries=%E9%94%90%E9%99%85&typename=%E7%A6%8F%E7%89%B9%E9%94%90%E9%99%85EcoBoost%20245%20%E6%82%A6%E4%BA%AB%E6%AC%BE&typecode=CAF6461AA61"
+    dl = Download()
+    par.parse_detail_page_get_pdf_url(dl.download_first_page(url),r)
+
 
 
 

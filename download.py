@@ -50,14 +50,17 @@ class Download(object):
             for data in html.iter_content():
                 file.write(data)
 
-    def down_pdf_with_tqdm(self,url):
+    def down_pdf_with_tqdm(self,url,dst):
         """
         下载pdf,带有进度条的方式
         :param url: pdf的下载的url地址
         :return: 返回文件的总大小，不重要
         """
-        dst = url.split("/")[-1]
-        response = requests.get(url, stream=True)
+        headers = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
+            'Connection': 'close'
+        }
+        response = requests.get(url, headers=headers, stream="TRUE")
         file_size = int(response.headers['content-length'])
         if os.path.exists(dst):
             first_byte = os.path.getsize(dst)

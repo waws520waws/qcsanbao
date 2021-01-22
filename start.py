@@ -19,7 +19,7 @@ from download import Download
 from parse import Parse
 from tools import make_url_list
 from config import configs
-from tools import get_redis_connect
+from tools import get_redis_connect,make_dir
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -48,8 +48,11 @@ if __name__ == '__main__':
 
     print("开始下载pdf")
     for pdf_url in r.smembers("pdf_url_list"):
-        dl.down_pdf_with_tqdm(pdf_url)
-        print(pdf_url,"已经下载完成")
+        car_name,car_type,pdf_real_url = pdf_url.split("#@#")
+        pdf_name = pdf_real_url.split("/")[-1]
+        dst = make_dir(car_name,car_type,pdf_name)
+        dl.down_pdf_with_tqdm(pdf_real_url,dst)
+        print(pdf_real_url,"已经下载完成")
         r.srem("pdf_url_list", pdf_url)
 
 

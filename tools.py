@@ -55,6 +55,18 @@ def make_dir(car_name,car_type,pdf_name):
         os.mkdir(car_type_dir)
     return pdf_path
 
+def make_store_html_dir(first_dir = configs["first_dir"],sec_dir = configs["sec_dir"]):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    html_store_path = os.path.join(base_dir,first_dir,sec_dir)
+    first_dir_path = os.path.join(base_dir, first_dir)
+    sec_dir_path = os.path.join(first_dir_path, sec_dir)
+    if not os.path.exists(first_dir_path):
+        os.mkdir(first_dir_path)
+    if not os.path.exists(sec_dir_path):
+        os.mkdir(sec_dir_path)
+    return html_store_path
+
+
 def change_success_or_fail_num(num):
     r = get_redis_connect()
     if num:

@@ -33,10 +33,12 @@ if __name__ == '__main__':
     make_url_list(base_url,par.parse_main_page_get_total_pagenum(dl.download_first_page(url)))
     for url in r.smembers("url_list"):
         r = par.parse_main_page_get_detail_page_url(url,dl.download_first_page(url),r)
+        dl.download_list_page_html(url)
         r.srem("url_list",url)
 
     for detail_url in r.smembers("detail_url_list"):
         par.parse_detail_page_get_url(detail_url,dl.download_first_page(detail_url),r)
+        dl.download_code_page(detail_url)
         r.srem("detail_url_list", detail_url)
 
     for sanbao_detail_url in r.smembers("sanbao_info_url_list"):

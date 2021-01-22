@@ -24,4 +24,6 @@ configs = {
         'db': 15
     },
     "basic_url":"https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p=",
+    "first_dir":"www.qcsanbao.cn",
+    "sec_dir":"webqcba",
 }

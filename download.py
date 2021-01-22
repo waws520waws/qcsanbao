@@ -14,10 +14,12 @@
         2、下载三包相关的pdf
 """
 import requests
-from urllib.request import urlretrieve
 import os
 from tqdm import tqdm
+from tools import change_success_or_fail_num,get_success_and_fail_num,get_logger
+import traceback
 
+logger = get_logger()
 
 class Download(object):
     def download_first_page(self,url):
@@ -30,8 +32,19 @@ class Download(object):
                     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
                     'Connection': 'close'
                     }
-        html = requests.get(url, headers=headers)
-        return html.text
+        try:
+            html = requests.get(url, headers=headers)
+            num = 1
+            logger.info(url+" 已经成功爬取")
+            return html.text
+        except Exception as e:
+            num = 0
+            logger.info(url + " 爬取失败" + traceback.format_exc().replace("\n"," "))
+        finally:
+            change_success_or_fail_num(num)
+            s_num, f_num = get_success_and_fail_num()
+            print(f"爬取成功了{s_num}个数据,失败了{f_num}条数据")
+
 
 
     def download_pdf_without_tqdm(self,url):
@@ -79,6 +92,7 @@ class Download(object):
                     f.write(chunk)
                     pbar.update(1024)
         pbar.close()
+        logger.info(url + " 文件已经下载完成")
         return file_size
 
 

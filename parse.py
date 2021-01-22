@@ -18,6 +18,10 @@
 """
 from bs4 import BeautifulSoup
 import re
+from tools import get_logger
+import traceback
+
+logger = get_logger()
 
 
 class Parse(object):
@@ -33,7 +37,7 @@ class Parse(object):
         # return int(re.search(pattern, all_str, re.M | re.I).group(1))
         return 4
 
-    def parse_main_page_get_detail_page_url(self,html,r):
+    def parse_main_page_get_detail_page_url(self,url,html,r):
         """
         用于获取详情页的url
         :param html: 下载下来的网页页面的数据
@@ -42,26 +46,30 @@ class Parse(object):
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select("#mytable tr")[1:]
         new_url_list = []
-        for tr in tr_list:
-            href_list = tr.select("[name=\"tpc\"]")[0]["href"]
-            if href_list.count("(") != 1:
-                pattern = r"totesttpc\((.+)\)"
-                href_list = re.search(pattern,href_list).group(1).split(",")
-            else:
-                href_list = href_list.split("(")[1].replace(")", "").split(",")
+        try:
+            for tr in tr_list:
+                href_list = tr.select("[name=\"tpc\"]")[0]["href"]
+                if href_list.count("(") != 1:
+                    pattern = r"totesttpc\((.+)\)"
+                    href_list = re.search(pattern,href_list).group(1).split(",")
+                else:
+                    href_list = href_list.split("(")[1].replace(")", "").split(",")
 
-            href_list[0] = "author=" + href_list[0].replace("'", "")
-            href_list[1] = "brand=" + href_list[1].replace("'", "")
-            href_list[2] = "vehiceSeries=" + href_list[2].replace("'", "")
-            href_list[3] = "typeName=" + href_list[3].replace("'", "")
-            href_list[4] = "typecode=" + href_list[4].replace("'", "")
-            href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
-            new_url = "&".join(href_list)
-            if r.sadd("all_detail_url_list",new_url):
-                r.sadd("detail_url_list",new_url)
-        return r
+                href_list[0] = "author=" + href_list[0].replace("'", "")
+                href_list[1] = "brand=" + href_list[1].replace("'", "")
+                href_list[2] = "vehiceSeries=" + href_list[2].replace("'", "")
+                href_list[3] = "typeName=" + href_list[3].replace("'", "")
+                href_list[4] = "typecode=" + href_list[4].replace("'", "")
+                href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
+                new_url = "&".join(href_list)
+                if r.sadd("all_detail_url_list",new_url):
+                    r.sadd("detail_url_list",new_url)
+        except:
+            logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
+        finally:
+            return r
 
-    def parse_detail_page_get_url(self,html,r):
+    def parse_detail_page_get_url(self,url,html,r):
         """
         获取详情页的三包页面的url
         :param html: 详情页的html
@@ -75,12 +83,12 @@ class Parse(object):
             if r.sadd("all_sanbao_info_url_list", new_url):
                 r.sadd("sanbao_info_url_list", new_url)
         except:
-            pass
+            logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         finally:
             return r
 
 
-    def parse_detail_page_get_pdf_url(self,html,r):
+    def parse_detail_page_get_pdf_url(self,url,html,r):
         """
         解析三包详情页面最后获得pdf的下载url列表
         :param html: 三包详情页的地址
@@ -99,7 +107,7 @@ class Parse(object):
                 if r.sadd("all_pdf_url_list",pdf_url):
                     r.sadd("pdf_url_list",pdf_url)
             except:
-                href = ""
+                logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         return r
 
 if __name__ == '__main__':

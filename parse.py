@@ -30,9 +30,10 @@ class Parse(object):
         soup = BeautifulSoup(html, "lxml")
         pattern = r"第1/(\d+)页"
         all_str = str(soup.select(".dateTable")[2].select("td")[0])
-        return int(re.search(pattern, all_str, re.M | re.I).group(1))
+        # return int(re.search(pattern, all_str, re.M | re.I).group(1))
+        return 4
 
-    def parse_main_page_get_detail_page_url(self,html):
+    def parse_main_page_get_detail_page_url(self,html,r):
         """
         用于获取详情页的url
         :param html: 下载下来的网页页面的数据
@@ -56,10 +57,11 @@ class Parse(object):
             href_list[4] = "typecode=" + href_list[4].replace("'", "")
             href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
             new_url = "&".join(href_list)
-            new_url_list.append(new_url)
-        return new_url_list
+            if r.sadd("all_detail_url_list",new_url):
+                r.sadd("detail_url_list",new_url)
+        return r
 
-    def parse_detail_page_get_url(self,html):
+    def parse_detail_page_get_url(self,html,r):
         """
         获取详情页的三包页面的url
         :param html: 详情页的html
@@ -67,11 +69,18 @@ class Parse(object):
         """
         soup = BeautifulSoup(html, "lxml")
         base_url = "https://www.qcsanbao.cn/webqcba/"
-        td = soup.select(".tdBg")[0].select("td")[7].select("a")[0].get("target")
-        new_url = base_url + td
-        return new_url
+        try:
+            td = soup.select(".tdBg")[0].select("td")[7].select("a")[0].get("target")
+            new_url = base_url + td
+            if r.sadd("all_sanbao_info_url_list", new_url):
+                r.sadd("sanbao_info_url_list", new_url)
+        except:
+            pass
+        finally:
+            return r
 
-    def parse_detail_page_get_pdf_url(self,html):
+
+    def parse_detail_page_get_pdf_url(self,html,r):
         """
         解析三包详情页面最后获得pdf的下载url列表
         :param html: 三包详情页的地址
@@ -80,15 +89,15 @@ class Parse(object):
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".formTable tr")[6:10]
         base_url = "https://sanbaobeian.dpac.org.cn"
-        pdf_url_list = []
         for tr in tr_list:
             try:
                 href = tr.select("a")[0].get("href").split("'")[1]
                 pdf_url = base_url + href
-                pdf_url_list.append(pdf_url)
+                if r.sadd("all_pdf_url_list",pdf_url):
+                    r.sadd("pdf_url_list",pdf_url)
             except:
                 href = ""
-        return pdf_url_list
+        return r
 
 
 

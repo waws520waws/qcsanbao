@@ -18,33 +18,38 @@ import argparse
 from download import Download
 from parse import Parse
 from tools import make_url_list
+from config import configs
+from tools import get_redis_connect
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', "--url", type=str, default='https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p=1', help="要爬取的网站")
     args = parser.parse_args()
     url = args.url
-    base_url = "https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p="
+    base_url = configs["basic_url"]
+    r = get_redis_connect()
     dl = Download()
     par = Parse()
-    detail_url_list = []
-    url_list = make_url_list(base_url,par.parse_main_page_get_total_pagenum(dl.download_first_page(url)))
-    for url in url_list[:3]:
-        detail_url_list.extend(par.parse_main_page_get_detail_page_url(dl.download_first_page(url)))
+    make_url_list(base_url,par.parse_main_page_get_total_pagenum(dl.download_first_page(url)))
+    for url in r.smembers("url_list"):
+        r = par.parse_main_page_get_detail_page_url(dl.download_first_page(url),r)
+        print(url,"已经爬取完成")
+        r.srem("url_list",url)
 
-    sanbao_detail_url_list = []
-    for detail_url in detail_url_list:
-        sanbao_detail_url_list.append(par.parse_detail_page_get_url(dl.download_first_page(detail_url)))
+    for detail_url in r.smembers("detail_url_list"):
+        par.parse_detail_page_get_url(dl.download_first_page(detail_url),r)
+        print(detail_url, "已经爬取完成")
+        r.srem("detail_url_list", detail_url)
 
-    pdf_url_list = []
-    for sanbao_detail_url in sanbao_detail_url_list:
-        pdf_url_list.extend(par.parse_detail_page_get_pdf_url(dl.download_first_page(sanbao_detail_url)))
+    for sanbao_detail_url in r.smembers("sanbao_info_url_list"):
+        par.parse_detail_page_get_pdf_url(dl.download_first_page(sanbao_detail_url),r)
+        print(sanbao_detail_url, "已经爬取完成")
+        r.srem("sanbao_info_url_list", sanbao_detail_url)
 
-    pdf_url_list = list(set(pdf_url_list))
     print("开始下载pdf")
-    for pdf_url in pdf_url_list:
+    for pdf_url in r.smembers("pdf_url_list"):
         dl.down_pdf_with_tqdm(pdf_url)
         print(pdf_url,"已经下载完成")
-
+        r.srem("pdf_url_list", pdf_url)
 
 

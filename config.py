@@ -23,4 +23,5 @@ configs = {
         'port': 6379,
         'db': 15
     },
+    "basic_url":"https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p="
 }

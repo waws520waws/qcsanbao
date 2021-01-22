@@ -23,10 +23,11 @@ def make_url_list(base_url,num):
     :param num: 总页数
     :return: 列表页的url_list
     """
-    url_list = []
+    r = get_redis_connect()
+
     for i in range(1,num+1):
-        url_list.append(base_url + str(i))
-    return url_list
+        if r.sadd("all_url_list",base_url + str(i)):
+            r.sadd("url_list",base_url + str(i))
 
 
 def get_redis_connect():

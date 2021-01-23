@@ -19,7 +19,8 @@ from download import Download
 from parse import Parse
 from tools import make_url_list
 from config import configs
-from tools import get_redis_connect,make_dir
+from tools import get_redis_connect,make_dir,make_all_path
+import os
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -43,14 +44,22 @@ if __name__ == '__main__':
 
     for sanbao_detail_url in r.smembers("sanbao_info_url_list"):
         par.parse_detail_page_get_pdf_url(sanbao_detail_url,dl.download_first_page(sanbao_detail_url),r)
+        dl.download_sanbao_detail_page(sanbao_detail_url)
         r.srem("sanbao_info_url_list", sanbao_detail_url)
+
+
+    for pdf_download_html_url in r.smembers("pdf_download_page_url_list"):
+        car_name,car_type,info,pdf_real_url = pdf_download_html_url.split("#@#")
+        dl.download_sanbao_pdf_detail_page(pdf_download_html_url)
+        r.srem("pdf_download_page_url_list", pdf_download_html_url)
 
     print("开始下载pdf")
     for pdf_url in r.smembers("pdf_url_list"):
-        car_name,car_type,pdf_real_url = pdf_url.split("#@#")
-        pdf_name = pdf_real_url.split("/")[-1]
-        dst = make_dir(car_name,car_type,pdf_name)
-        dl.down_pdf_with_tqdm(pdf_real_url,dst)
+        pdf_url_path = pdf_url[8:]
+        pdf_path_dirs = pdf_url_path.split("/")
+        dir = make_all_path(pdf_path_dirs[:-1])
+        dst = os.path.join(dir,pdf_path_dirs[-1])
+        dl.down_pdf_with_tqdm(pdf_url,dst)
         r.srem("pdf_url_list", pdf_url)
 
 

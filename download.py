@@ -16,7 +16,7 @@
 import requests
 import os
 from tqdm import tqdm
-from tools import change_success_or_fail_num,get_success_and_fail_num,get_logger,make_store_html_dir
+from tools import change_success_or_fail_num,get_success_and_fail_num,get_logger,make_store_html_dir,make_store_detail_html_dir
 import traceback
 from bs4 import BeautifulSoup
 from parse import Parse
@@ -52,6 +52,13 @@ class Download(object):
             print(f"爬取成功了{s_num}个数据,失败了{f_num}条数据")
 
 
+    def write_file(self,html_store_dir,file_name,html_str):
+        file_path = os.path.join(html_store_dir, file_name)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(html_str)
+        logger.info(file_name + " 已经下载完成")
+
+
     def download_list_page_html(self,url):
         html = requests.get(url, headers=self.headers)
         num_str = url.split("&")[-1].split("=")[-1]
@@ -85,24 +92,41 @@ class Download(object):
             html_text = html_text.replace(epage_str, "./page"+ total_page.zfill(4)+".html")
         file_name = "page" + num_str.zfill(4) + ".html"
         html_store_dir = make_store_html_dir()
-        file_path = os.path.join(html_store_dir,file_name)
-        with open(file_path,"w",encoding="utf-8") as f:
-            f.write(html_text)
-        logger.info(file_name + " 已经下载完成")
+        self.write_file(html_store_dir,file_name,html_text)
+
+
+    def get_typename_and_codename(self,url):
+        name_pattern = "&typeName=(.+?)&"
+        type_name = re.search(name_pattern, url,re.I).group(1)
+        code_pattern = "&typecode=(.+)"
+        code_name = re.search(code_pattern, url).group(1)
+        return type_name,code_name
+
 
 
     def download_code_page(self,url):
         html = requests.get(url, headers=self.headers)
-        name_pattern = "&typeName=(.+?)&"
-        type_name = re.search(name_pattern,url).group(1)
-        code_pattern = "&typecode=(.+)"
-        code_name = re.search(code_pattern, url).group(1)
+        type_name,code_name = self.get_typename_and_codename(url)
         file_name = type_name + "_" + code_name + ".html"
         html_store_dir = make_store_html_dir()
-        file_path = os.path.join(html_store_dir, file_name)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(html.text)
-        logger.info(file_name + " 已经下载完成")
+        self.write_file(html_store_dir,file_name,html.text)
+
+
+    def download_sanbao_detail_page(self,url):
+        html = requests.get(url, headers=self.headers)
+        type_name, code_name = self.get_typename_and_codename(url)
+        file_name = type_name + "_" + code_name + "_detail.html"
+        html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
+        self.write_file(html_store_dir, file_name, html.text)
+
+
+
+    def download_sanbao_pdf_detail_page(self, pdf_url):
+        type_name, code_name, info, url = pdf_url.split("#@#")
+        html = requests.get(url, headers=self.headers)
+        file_name = type_name + "_" + code_name + "_detail_" + info + ".html"
+        html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
+        self.write_file(html_store_dir, file_name, html.text)
 
     def download_pdf_without_tqdm(self,url):
         """
@@ -155,9 +179,9 @@ class Download(object):
 
 if __name__ == '__main__':
 
-    url = "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels&author=11e3-0ff1-5ab8c46c-9506-b9174d954819&brand=%E6%B8%9D%E5%B7%9E&vehiceSeries=U70&typeName=%E6%BD%8D%E6%9F%B4U70%202021%E6%AC%BE1.5T%E8%87%AA%E5%8A%A8%E4%BC%98%E5%B0%8A%E7%89%88%205%E5%BA%A7&typecode=YZ6480YFJB1Z"
+    url = "https://www.qcsanbao.cn/webqcba/ThreeServlet?method=getThree&author=11e3-0fee-3b082796-9506-b9174d954819&qualityClauseName=GZQCJTCYC质量担保条款20191205002&brand=传祺&vehiceSeries=传祺GS8&typename=390T AT 两驱 豪华智联（纵擎版）&typecode=GAC6480J2P6B"
     dl = Download()
-    dl.download_code_page(url)
+    dl.download_sanbao_detail_page(url)
 
 
 

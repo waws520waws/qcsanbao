@@ -66,6 +66,19 @@ def make_store_html_dir(first_dir = configs["first_dir"],sec_dir = configs["sec_
         os.mkdir(sec_dir_path)
     return html_store_path
 
+def make_store_detail_html_dir(detail_dir):
+    detail_dir_path = os.path.join(make_store_html_dir(), detail_dir)
+    if not os.path.exists(detail_dir_path):
+        os.mkdir(detail_dir_path)
+    return detail_dir_path
+
+def make_all_path(path_list):
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    for path in path_list:
+        base_dir = os.path.join(base_dir,path)
+        if not os.path.exists(base_dir):
+            os.mkdir(base_dir)
+    return base_dir
 
 def change_success_or_fail_num(num):
     r = get_redis_connect()

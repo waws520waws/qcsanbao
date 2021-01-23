@@ -17,6 +17,7 @@ from config import configs
 import os
 import hashlib
 import logging
+from threading import Thread
 
 
 def get_md5(url):
@@ -156,6 +157,10 @@ def get_logger():
     logger.addHandler(fh)
     return logger
 
+
+def get_thread(func,f_args):
+    thread = Thread(target=func, args=(f_args,))
+    thread.start()
 
 
 

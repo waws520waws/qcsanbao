@@ -20,9 +20,14 @@ import logging
 
 
 def get_md5(url):
+    """
+    原本相对文件的路径进行md5加密，用于构建pdf的存放的路径，后期存放规则变化，弃用
+    :param url: 传入的pdf的url链接
+    :return: MD5加密后的16进制字符串的前8位
+    """
     m = hashlib.md5()
     m.update(url.encode("utf8"))
-    print(m.hexdigest()[:9])
+    return m.hexdigest()[:9]
 
 
 def make_url_list(base_url,num):
@@ -40,11 +45,22 @@ def make_url_list(base_url,num):
 
 
 def get_redis_connect():
+    """
+    获取redis的链接对象
+    :return: redis链接对象
+    """
     r = redis.Redis(host=configs["redis"]["host"], port=configs["redis"]["port"],db=configs["redis"]["db"], decode_responses=True)
     return r
 
 
 def make_dir(car_name,car_type,pdf_name):
+    """
+    制作车辆名称/车辆code的爬虫的目录/xxxx.pdf，最后返回pdf的完整路径，需要现在已经弃用
+    :param car_name: 车辆名称
+    :param car_type: 车辆code
+    :param pdf_name: pdf的文件名称
+    :return: pdf存放的完整路径
+    """
     base_dir = os.path.abspath(os.path.dirname(__file__))
     pdf_path = os.path.join(base_dir,car_name,car_type,pdf_name)
     car_name_dir = os.path.join(base_dir, car_name)
@@ -56,6 +72,12 @@ def make_dir(car_name,car_type,pdf_name):
     return pdf_path
 
 def make_store_html_dir(first_dir = configs["first_dir"],sec_dir = configs["sec_dir"]):
+    """
+    主要用于构建固定的二级目录 www.qcsanbao.cn/webqcba
+    :param first_dir: 第一级目录
+    :param sec_dir: 第二级目录
+    :return: 完整的路径
+    """
     base_dir = os.path.abspath(os.path.dirname(__file__))
     html_store_path = os.path.join(base_dir,first_dir,sec_dir)
     first_dir_path = os.path.join(base_dir, first_dir)
@@ -67,12 +89,23 @@ def make_store_html_dir(first_dir = configs["first_dir"],sec_dir = configs["sec_
     return html_store_path
 
 def make_store_detail_html_dir(detail_dir):
+    """
+    在上面的二级目录的基础上完成第三级目录的创建
+    :param detail_dir: 第三级的目录
+    :return: 第三级目录的详细的地址
+    """
     detail_dir_path = os.path.join(make_store_html_dir(), detail_dir)
     if not os.path.exists(detail_dir_path):
         os.mkdir(detail_dir_path)
     return detail_dir_path
 
+
 def make_all_path(path_list):
+    """
+    循环创建不定级别的目录
+    :param path_list: 目录的列表
+    :return: 返回对应的列表的级别的目录体系
+    """
     base_dir = os.path.abspath(os.path.dirname(__file__))
     for path in path_list:
         base_dir = os.path.join(base_dir,path)
@@ -80,7 +113,13 @@ def make_all_path(path_list):
             os.mkdir(base_dir)
     return base_dir
 
+
 def change_success_or_fail_num(num):
+    """
+    改变成功和失败的爬虫的个数
+    :param num: 判断是成功还是失败
+    :return: None
+    """
     r = get_redis_connect()
     if num:
         if r.get("success_num"):
@@ -95,12 +134,20 @@ def change_success_or_fail_num(num):
 
 
 def get_success_and_fail_num():
+    """
+    获取爬取成功，和失败的爬虫的数量
+    :return: 成功爬虫数量，失败的爬虫的数量
+    """
     r = get_redis_connect()
     success_num =r.get("success_num") if r.get("success_num") else 0
     fail_num = r.get("fail_num") if r.get("fail_num") else 0
     return success_num,fail_num
 
 def get_logger():
+    """
+    获取日志对象
+    :return: 日志对象
+    """
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler("test.log", "a", encoding="utf-8")
@@ -108,12 +155,6 @@ def get_logger():
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     return logger
-
-if __name__ == '__main__':
-    # make_dir("福特","CTYUUU","a.pdf")
-    # get_md5("https://sanbaobeian.dpac.org.cn/uploads/AttachmentData/%E6%96%B0%E7%A6%8F%E7%89%B9%E9%94%90%E7%95%8C%E8%BD%A6%E4%B8%BB%E6%89%8B%E5%86%8C.pdf")
-    # count_success_or_fault_num(1)
-    pass
 
 
 

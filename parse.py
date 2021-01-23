@@ -37,33 +37,54 @@ class Parse(object):
         # return int(re.search(pattern, all_str, re.M | re.I).group(1))
         return 4
 
+    def store_name_or_code_url_list(self,href_list,type,all_detail_url_list,detail_url_list,r):
+        """
+        辅助函数，用于构建需要下载车辆名称或者code的html文件的url，并将其放入到redis
+        :param href_list: 解析到的a链接的href属性元素的列表
+        :param type: 指定name类型，还是code的类型
+        :param all_detail_url_list: 用于去重的redis的url_set
+        :param detail_url_list: 用于去重的redis的url_set
+        :param r: redis的链接对象
+        :return: None
+        """
+        if href_list.count("(") != 1:
+            pattern = r"totesttpc\((.+)\)"
+            href_list = re.search(pattern, href_list).group(1).split(",")
+        else:
+            href_list = href_list.split("(")[1].replace(")", "").split(",")
+
+        href_list[0] = "author=" + href_list[0].replace("'", "")
+        href_list[1] = "brand=" + href_list[1].replace("'", "")
+        href_list[2] = "vehiceSeries=" + href_list[2].replace("'", "")
+        href_list[3] = "typeName=" + href_list[3].replace("'", "")
+        if type == "code":
+            href_list[4] = "typecode=" + href_list[4].replace("'", "")
+        href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
+        new_url = "&".join(href_list)
+        if r.sadd(all_detail_url_list, new_url):
+            r.sadd(detail_url_list, new_url)
+
+
+
     def parse_main_page_get_detail_page_url(self,url,html,r):
         """
-        用于获取详情页的url
-        :param html: 下载下来的网页页面的数据
-        :return: 详情页面的detial_url_list
+        解析页面，获取name页的下载url，获取code页的下载url
+        :param url: 详情页的url，主要用于打印日志定位问题
+        :param html: 需要解析的html的文本
+        :param r:redis的链接对象
+        :return: 最后将redis对象返回回去
         """
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select("#mytable tr")[1:]
         new_url_list = []
         try:
             for tr in tr_list:
-                href_list = tr.select("[name=\"tpc\"]")[0]["href"]
-                if href_list.count("(") != 1:
-                    pattern = r"totesttpc\((.+)\)"
-                    href_list = re.search(pattern,href_list).group(1).split(",")
-                else:
-                    href_list = href_list.split("(")[1].replace(")", "").split(",")
-
-                href_list[0] = "author=" + href_list[0].replace("'", "")
-                href_list[1] = "brand=" + href_list[1].replace("'", "")
-                href_list[2] = "vehiceSeries=" + href_list[2].replace("'", "")
-                href_list[3] = "typeName=" + href_list[3].replace("'", "")
-                href_list[4] = "typecode=" + href_list[4].replace("'", "")
-                href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
-                new_url = "&".join(href_list)
-                if r.sadd("all_detail_url_list",new_url):
-                    r.sadd("detail_url_list",new_url)
+                code_href_list = tr.select("[name=\"tpc\"]")[0]["href"]
+                name_href_list = tr.select("[name=\"tpn\"]")[0]["href"]
+                # 按照code的打开页面构造url存入redis
+                self.store_name_or_code_url_list(code_href_list,"code","all_detail_url_list","detail_url_list",r)
+                # 按照name的打开页面构造url存入redis
+                self.store_name_or_code_url_list(name_href_list,"name","all_brand_url_list","brand_url_list",r)
         except:
             logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         finally:
@@ -71,9 +92,11 @@ class Parse(object):
 
     def parse_detail_page_get_url(self,url,html,r):
         """
-        获取详情页的三包页面的url
-        :param html: 详情页的html
-        :return: 三包页面的url
+        解析页面，获取三包信息的下载url,存储在redis中
+        :param url: 详情页的url，主要用于打印日志定位问题
+        :param html: 需要解析的html的文本
+        :param r: redis的链接对象
+        :return: 最后将redis对象返回回去
         """
         soup = BeautifulSoup(html, "lxml")
         base_url = "https://www.qcsanbao.cn/webqcba/"
@@ -90,9 +113,11 @@ class Parse(object):
 
     def parse_detail_page_get_pdf_url(self,url,html,r):
         """
-        解析三包详情页面最后获得pdf的下载url列表
-        :param html: 三包详情页的地址
-        :return: pdf的下载url的列表
+        解析页面，获取pdf的下载url,存储在redis中
+        :param url: 详情页的url，主要用于打印日志定位问题
+        :param html: 需要解析的html的文本
+        :param r: redis的链接对象
+        :return: 最后将redis对象返回回去
         """
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".formTable tr")[6:10]
@@ -114,16 +139,3 @@ class Parse(object):
             except:
                 logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         return r
-
-if __name__ == '__main__':
-    import tools
-    from download import Download
-    r = tools.get_redis_connect()
-    par = Parse()
-    url ="https://www.qcsanbao.cn/webqcba/ThreeServlet?method=getThree&author=11e3-0fee-3b082796-9506-b9174d954819&qualityClauseName=GZQCJTCYC质量担保条款20191205002&brand=传祺&vehiceSeries=传祺GS8&typename=390T AT 两驱 豪华智联（纵擎版）&typecode=GAC6480J2P6B"
-    dl = Download()
-    par.parse_detail_page_get_pdf_url(url,dl.download_first_page(url),r)
-
-
-
-

@@ -53,6 +53,13 @@ class Download(object):
 
 
     def write_file(self,html_store_dir,file_name,html_str):
+        """
+        将获取的html的文本写入到.html文件中
+        :param html_store_dir: html的存放路径
+        :param file_name: 文件的名称
+        :param html_str: html的文本
+        :return: None
+        """
         file_path = os.path.join(html_store_dir, file_name)
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_str)
@@ -60,6 +67,11 @@ class Download(object):
 
 
     def download_list_page_html(self,url):
+        """
+        下载列表页的html文件，主要在这个地方需要做一件事：完成存储在同一级目录下的文件之间可以完成首页、上页、下页、末页的切换的功能
+        :param url: 列表页的url
+        :return: None
+        """
         html = requests.get(url, headers=self.headers)
         num_str = url.split("&")[-1].split("=")[-1]
         html_text = html.text
@@ -96,23 +108,57 @@ class Download(object):
 
 
     def get_typename_and_codename(self,url):
+        """
+        辅助函数，用于获取url中的code和name
+        :param url: code详情页的url
+        :return: 返回url中的code和name
+        """
         name_pattern = "&typeName=(.+?)&"
         type_name = re.search(name_pattern, url,re.I).group(1)
         code_pattern = "&typecode=(.+)"
         code_name = re.search(code_pattern, url).group(1)
         return type_name,code_name
 
-
+    def get_typename(self,url):
+        """
+        辅助函数，用于获取url中的name
+        :param url: name详情页的url
+        :return: 返回url中的name
+        """
+        name_pattern = "&typeName=(.+)"
+        type_name = re.search(name_pattern, url,re.I).group(1)
+        return type_name
 
     def download_code_page(self,url):
+        """
+        下载code详情页的html文件
+        :param url: code详情页的url
+        :return: None
+        """
         html = requests.get(url, headers=self.headers)
         type_name,code_name = self.get_typename_and_codename(url)
         file_name = type_name + "_" + code_name + ".html"
         html_store_dir = make_store_html_dir()
         self.write_file(html_store_dir,file_name,html.text)
 
+    def download_brand_page(self,url):
+        """
+        下载name详情页的html文件
+        :param url: name详情页的url
+        :return: None
+        """
+        html = requests.get(url, headers=self.headers)
+        type_name= self.get_typename(url)
+        file_name = type_name + ".html"
+        html_store_dir = make_store_html_dir()
+        self.write_file(html_store_dir,file_name,html.text)
 
     def download_sanbao_detail_page(self,url):
+        """
+        下载三包详情页的html文件
+        :param url: 三包详情页的url
+        :return: None
+        """
         html = requests.get(url, headers=self.headers)
         type_name, code_name = self.get_typename_and_codename(url)
         file_name = type_name + "_" + code_name + "_detail.html"
@@ -122,6 +168,11 @@ class Download(object):
 
 
     def download_sanbao_pdf_detail_page(self, pdf_url):
+        """
+        下载三包pdf下载详情页的html文件
+        :param url: pdf下载详情页的url
+        :return: None
+        """
         type_name, code_name, info, url = pdf_url.split("#@#")
         html = requests.get(url, headers=self.headers)
         file_name = type_name + "_" + code_name + "_detail_" + info + ".html"
@@ -175,13 +226,6 @@ class Download(object):
         pbar.close()
         logger.info(url + " 文件已经下载完成")
         return file_size
-
-
-if __name__ == '__main__':
-
-    url = "https://www.qcsanbao.cn/webqcba/ThreeServlet?method=getThree&author=11e3-0fee-3b082796-9506-b9174d954819&qualityClauseName=GZQCJTCYC质量担保条款20191205002&brand=传祺&vehiceSeries=传祺GS8&typename=390T AT 两驱 豪华智联（纵擎版）&typecode=GAC6480J2P6B"
-    dl = Download()
-    dl.download_sanbao_detail_page(url)
 
 
 

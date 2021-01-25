@@ -199,7 +199,7 @@ class Download(object):
         """
         下载pdf,带有进度条的方式
         :param url: pdf的下载的url地址
-        :return: 返回文件的总大小，不重要
+        :return: 返回文件是否下载完成
         """
         headers = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36",
@@ -225,7 +225,7 @@ class Download(object):
                     pbar.update(1024)
         pbar.close()
         logger.info(url + " 文件已经下载完成")
-        return file_size
+        return True
 
 
 

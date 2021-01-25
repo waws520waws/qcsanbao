@@ -263,7 +263,10 @@ def download_pdf_file(url_list,r,func1,lock):
         pdf_path_dirs = pdf_url_path.split("/")
         dir = make_all_path(pdf_path_dirs[:-1])
         dst = os.path.join(dir, pdf_path_dirs[-1])
-        func1(pdf_url,dst)
+        if func1(pdf_url,dst):
+            pass
+        else:
+            r.sadd(url_list,pdf_url)
 
 
 

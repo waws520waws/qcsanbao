@@ -21,6 +21,7 @@ from threading import Thread
 import pymysql
 from threading import Lock
 import time
+import traceback
 
 def get_md5(url):
     """
@@ -44,7 +45,7 @@ def make_url_list(base_url,num):
 
     for i in range(1,num+1):
         if r.sadd("all_url_list",base_url + str(i)):
-            r.sadd("url_list",base_url + str(i))
+            r.rpush("url_list",base_url + str(i))
 
 
 def get_redis_connect():
@@ -184,7 +185,7 @@ def download_and_parse_page(url_list,r,func1,func2,func3,lock):
     while True:
         count = 0
         lock.acquire()
-        url = r.spop(url_list)
+        url = r.lpop(url_list)
         lock.release()
         if not url:
             """
@@ -195,7 +196,7 @@ def download_and_parse_page(url_list,r,func1,func2,func3,lock):
             while count < 30:
                 time.sleep(10)
                 count += 1
-                url = r.spop(url_list)
+                url = r.lpop(url_list)
                 if url:
                     break
             else:
@@ -218,13 +219,13 @@ def download_page(url_list,r,func1,lock):
     while True:
         count = 0
         lock.acquire()
-        url = r.spop(url_list)
+        url = r.lpop(url_list)
         lock.release()
         if url is None:
             while count < 30:
                 time.sleep(10)
                 count += 1
-                url = r.spop(url_list)
+                url = r.lpop(url_list)
                 if url:
                     break
             else:
@@ -243,30 +244,33 @@ def download_pdf_file(url_list,r,func1,lock):
     :param lock: 锁
     :return: 没有返回
     """
-    while True:
-        count = 0
-        lock.acquire()
-        pdf_url = r.spop(url_list)
-        lock.release()
-        if pdf_url is None:
-            while count < 30:
-                time.sleep(10)
-                count += 1
-                pdf_url = r.spop(url_list)
-                if pdf_url:
-                    break
-            else:
-                logger = get_logger()
-                logger.info(url_list + " 已经爬取完毕###")
-                return
-        pdf_url_path = pdf_url[8:]
-        pdf_path_dirs = pdf_url_path.split("/")
-        dir = make_all_path(pdf_path_dirs[:-1])
-        dst = os.path.join(dir, pdf_path_dirs[-1])
-        if func1(pdf_url,dst):
-            pass
-        else:
-            r.sadd(url_list,pdf_url)
+    try:
+        while True:
+            count = 0
+            lock.acquire()
+            pdf_url = r.lpop(url_list)
+            lock.release()
+            if pdf_url is None:
+                while count < 30:
+                    time.sleep(10)
+                    count += 1
+                    pdf_url = r.lpop(url_list)
+                    if pdf_url:
+                        break
+                else:
+                    logger = get_logger()
+                    logger.info(url_list + " 已经爬取完毕###")
+                    return
+            pdf_url_path = pdf_url[8:]
+            pdf_path_dirs = pdf_url_path.split("/")
+            dir = make_all_path(pdf_path_dirs[:-1])
+            dst = os.path.join(dir, pdf_path_dirs[-1])
+            func1(pdf_url,dst)
+    except Exception as e:
+        logger = get_logger()
+        logger.info(" 解析失败" + traceback.format_exc().replace("\n", " "))
+    finally:
+        download_pdf_file(url_list, r, func1, lock)
 
 
 

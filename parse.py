@@ -34,7 +34,8 @@ class Parse(object):
         soup = BeautifulSoup(html, "lxml")
         pattern = r"第1/(\d+)页"
         all_str = str(soup.select(".dateTable")[2].select("td")[0])
-        return 10 if test else int(re.search(pattern, all_str, re.M | re.I).group(1))
+        # return 10 if test else int(re.search(pattern, all_str, re.M | re.I).group(1))
+        return test
 
     def store_name_or_code_url_list(self,href_list,type,all_detail_url_list,detail_url_list,r):
         """
@@ -61,7 +62,7 @@ class Parse(object):
         href_list.insert(0, "https://www.qcsanbao.cn/webqcba/CarModelsServlet?method=getCarModels")
         new_url = "&".join(href_list)
         if r.sadd(all_detail_url_list, new_url):
-            r.sadd(detail_url_list, new_url)
+            r.rpush(detail_url_list, new_url)
 
 
 
@@ -103,7 +104,7 @@ class Parse(object):
             td = soup.select(".tdBg")[0].select("td")[7].select("a")[0].get("target")
             new_url = base_url + td
             if r.sadd("all_sanbao_info_url_list", new_url):
-                r.sadd("sanbao_info_url_list", new_url)
+                r.rpush("sanbao_info_url_list", new_url)
         except:
             logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         finally:
@@ -127,14 +128,21 @@ class Parse(object):
         for tr in tr_list:
             try:
                 href = tr.select("a")[0].get("href").split("'")[1]
-                pdf_url = pdf_base_url + href
                 html_url = html_base_url + href
                 info = tr.select("a")[0].get_text().strip()
-                pdf_url_info = tr_car_name + "#@#" + tr_car_type + "#@#" + info +"#@#" + html_url
-                if r.sadd("all_pdf_download_page_url_list",pdf_url_info):
-                    r.sadd("pdf_download_page_url_list",pdf_url_info)
-                if r.sadd("all_pdf_url_list", pdf_url):
-                    r.sadd("pdf_url_list", pdf_url)
+                pdf_url_info = tr_car_name + "#@#" + tr_car_type + "#@#" + info + "#@#" + html_url
+                if r.sadd("all_pdf_download_page_url_list", pdf_url_info):
+                    r.rpush("pdf_download_page_url_list", pdf_url_info)
+                if ";" in href:
+                    href_list = href.split(";")
+                    for href_1 in href_list:
+                        pdf_url = pdf_base_url + href_1
+                        if r.sadd("all_pdf_url_list", pdf_url):
+                            r.rpush("pdf_url_list", pdf_url)
+                else:
+                    pdf_url = pdf_base_url + href
+                    if r.sadd("all_pdf_url_list", pdf_url):
+                        r.rpush("pdf_url_list", pdf_url)
             except:
                 logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         return r

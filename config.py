@@ -25,6 +25,7 @@ configs = {
     "basic_url":"https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p=",
     "first_dir":"www.qcsanbao.cn",
     "sec_dir":"webqcba",
-    "test": True,
+    # "test": 10,
+    "test":1270,
     "thread_num": 8
 }

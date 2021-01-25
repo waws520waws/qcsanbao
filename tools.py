@@ -160,58 +160,110 @@ def get_logger():
     return logger
 
 
-def get_thread(func,f_args):
-    thread = Thread(target=func, args=(f_args,))
-    thread.start()
-
 def get_mysql_connect():
+    """
+    获取mysqld的链接对象，弃用
+    :return: mysql的链接的游标对象
+    """
     db = pymysql.connect(host=configs["host"], user=configs["user"], passwd=configs["passwd"], db=configs["db"],port=configs["port"])
     cursor = db.cursor()
     return cursor
 
-# 列表页的解析详情页的数据url,存放在redis中
+
 def download_and_parse_page(url_list,r,func1,func2,func3,lock):
+    """
+    根据指定链接，解析并下载对应的html文件，并且将相关的url链接存储到redis中
+    :param url_list: 字符串，待爬取的redis中存储的url_list
+    :param r: redis对象
+    :param func1: 处理对应url的方法处理方法1
+    :param func2: 处理对应url的方法处理方法2
+    :param func3: 处理对应url的方法处理方法3
+    :param lock: 锁
+    :return: 无返回
+    """
     while True:
+        count = 0
         lock.acquire()
         url = r.spop(url_list)
         lock.release()
         if not url:
-            time.sleep(10)
-            if not url:
-                break
+            """
+           这个部分主要是判断一个redis的存储，是不是空，不是空，直接去取数据，应用下面的方法进行处理即可，当为空时，让整个线程进行等待，不断的扫描
+           可能再次解析到的数据，还会存储到当前的url_list中，扫描到数据继续进行处理，假设5分钟都没有扫描到数据吧，说明这个部分已经全部爬取完成，直接rerturn
+           让当前线程直接结束即可。
+           """
+            while count < 30:
+                time.sleep(10)
+                count += 1
+                url = r.spop(url_list)
+                if url:
+                    break
+            else:
+                logger = get_logger()
+                logger.info(url_list + " 已经爬取完毕###")
+                return
         func1(url, func2(url), r)
         func3(url)
-        time.sleep(0.5)
 
 
 def download_page(url_list,r,func1,lock):
+    """
+    根据指定链接，下载对应的html文件
+    :param url_list: 字符串，待爬取的redis中存储的url_list
+    :param r: redis对象
+    :param func1: 处理对应url的方法
+    :param lock: 锁
+    :return: 无
+    """
     while True:
+        count = 0
         lock.acquire()
         url = r.spop(url_list)
         lock.release()
-        if not url:
-            time.sleep(10)
-            if not url:
-                break
+        if url is None:
+            while count < 30:
+                time.sleep(10)
+                count += 1
+                url = r.spop(url_list)
+                if url:
+                    break
+            else:
+                logger = get_logger()
+                logger.info(url_list + " 已经爬取完毕###")
+                return
         func1(url)
-        time.sleep(0.5)
 
 
 def download_pdf_file(url_list,r,func1,lock):
+    """
+    根据指定链接，下载pdf文件
+    :param url_list: 字符串，待爬取的redis中存储的url_list
+    :param r: redis的链接对象
+    :param func1: 对于拿到的pdf_url的处理方法
+    :param lock: 锁
+    :return: 没有返回
+    """
     while True:
+        count = 0
         lock.acquire()
         pdf_url = r.spop(url_list)
         lock.release()
-        if not pdf_url:
-            time.sleep(10)
-            if not pdf_url:
-                break
+        if pdf_url is None:
+            while count < 30:
+                time.sleep(10)
+                count += 1
+                pdf_url = r.spop(url_list)
+                if pdf_url:
+                    break
+            else:
+                logger = get_logger()
+                logger.info(url_list + " 已经爬取完毕###")
+                return
         pdf_url_path = pdf_url[8:]
         pdf_path_dirs = pdf_url_path.split("/")
         dir = make_all_path(pdf_path_dirs[:-1])
         dst = os.path.join(dir, pdf_path_dirs[-1])
         func1(pdf_url,dst)
-        time.sleep(0.5)
 
 
 

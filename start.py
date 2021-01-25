@@ -41,24 +41,18 @@ if __name__ == '__main__':
 
     threading_list = []
 
-    threading_list.extend([Thread(target=download_and_parse_page,args=("url_list",r,par.parse_main_page_get_detail_page_url,dl.download_first_page,dl.download_list_page_html,lock)) for _ in  range(2)])
+    threading_list.extend([Thread(target=download_and_parse_page,args=("url_list",r,par.parse_main_page_get_detail_page_url,dl.download_first_page,dl.download_list_page_html,lock)) for _ in  range(3)])
     threading_list.extend([Thread(target=download_and_parse_page,args=("detail_url_list",r,par.parse_detail_page_get_url,dl.download_first_page,dl.download_code_page,lock)) for _ in  range(8)])
-
     threading_list.extend([Thread(target=download_page, args=("brand_url_list", r, dl.download_brand_page, lock)) for _ in range(8)])
-
     threading_list.extend([Thread(target=download_and_parse_page, args=("sanbao_info_url_list", r, par.parse_detail_page_get_pdf_url, dl.download_first_page,dl.download_sanbao_detail_page, lock)) for _ in range(8)])
-
-
     threading_list.extend([Thread(target=download_page, args=("pdf_download_page_url_list",r,dl.download_sanbao_pdf_detail_page,lock)) for _ in range(8)])
-
     threading_list.extend([Thread(target=download_pdf_file, args=("pdf_url_list",r,dl.down_pdf_with_tqdm,lock)) for _ in range(8)])
 
     for thread in threading_list:
         thread.start()
+        time.sleep(1)
 
     for thread in threading_list:
         thread.join()
-
-    print("哈哈")
 
 

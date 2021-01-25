@@ -21,6 +21,7 @@ import traceback
 from bs4 import BeautifulSoup
 from parse import Parse
 import re
+from config import configs
 
 logger = get_logger()
 
@@ -76,7 +77,7 @@ class Download(object):
         num_str = url.split("&")[-1].split("=")[-1]
         html_text = html.text
         par = Parse()
-        total_page = str(par.parse_main_page_get_total_pagenum(html.text))
+        total_page = str(par.parse_main_page_get_total_pagenum(html.text,configs["test"]))
 
         pattern_fpage = "id=\"fpage\" href=\"(.+?)\""
         pattern_upage = "id=\"upage\" href=\"(.+?)\""

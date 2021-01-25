@@ -25,7 +25,7 @@ logger = get_logger()
 
 
 class Parse(object):
-    def parse_main_page_get_total_pagenum(self,html):
+    def parse_main_page_get_total_pagenum(self,html,test):
         """
         获取首页的总页数，用于构建url_list
         :param html: 首页的下载的数据
@@ -34,8 +34,7 @@ class Parse(object):
         soup = BeautifulSoup(html, "lxml")
         pattern = r"第1/(\d+)页"
         all_str = str(soup.select(".dateTable")[2].select("td")[0])
-        # return int(re.search(pattern, all_str, re.M | re.I).group(1))
-        return 4
+        return 10 if test else int(re.search(pattern, all_str, re.M | re.I).group(1))
 
     def store_name_or_code_url_list(self,href_list,type,all_detail_url_list,detail_url_list,r):
         """

@@ -18,7 +18,9 @@ import os
 import hashlib
 import logging
 from threading import Thread
-
+import pymysql
+from threading import Lock
+import time
 
 def get_md5(url):
     """
@@ -161,6 +163,58 @@ def get_logger():
 def get_thread(func,f_args):
     thread = Thread(target=func, args=(f_args,))
     thread.start()
+
+def get_mysql_connect():
+    db = pymysql.connect(host=configs["host"], user=configs["user"], passwd=configs["passwd"], db=configs["db"],port=configs["port"])
+    cursor = db.cursor()
+    return cursor
+
+# 列表页的解析详情页的数据url,存放在redis中
+def download_and_parse_page(url_list,r,func1,func2,func3,lock):
+    while True:
+        lock.acquire()
+        url = r.spop(url_list)
+        lock.release()
+        if not url:
+            time.sleep(10)
+            if not url:
+                break
+        func1(url, func2(url), r)
+        func3(url)
+        time.sleep(0.5)
+
+
+def download_page(url_list,r,func1,lock):
+    while True:
+        lock.acquire()
+        url = r.spop(url_list)
+        lock.release()
+        if not url:
+            time.sleep(10)
+            if not url:
+                break
+        func1(url)
+        time.sleep(0.5)
+
+
+def download_pdf_file(url_list,r,func1,lock):
+    while True:
+        lock.acquire()
+        pdf_url = r.spop(url_list)
+        lock.release()
+        if not pdf_url:
+            time.sleep(10)
+            if not pdf_url:
+                break
+        pdf_url_path = pdf_url[8:]
+        pdf_path_dirs = pdf_url_path.split("/")
+        dir = make_all_path(pdf_path_dirs[:-1])
+        dst = os.path.join(dir, pdf_path_dirs[-1])
+        func1(pdf_url,dst)
+        time.sleep(0.5)
+
+
+
 
 
 

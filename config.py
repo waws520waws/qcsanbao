@@ -25,4 +25,11 @@ configs = {
     "basic_url":"https://www.qcsanbao.cn/webqcba/DVMProducerServlet?method=getWhereList&p=",
     "first_dir":"www.qcsanbao.cn",
     "sec_dir":"webqcba",
+    "mysql":{
+        "host":"127.0.0.1",
+        "user":"root",
+        "passwd":"709103wei",
+        "db":"qcsanbao",
+        "port":3306
+    }
 }

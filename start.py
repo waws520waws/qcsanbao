@@ -36,6 +36,7 @@ if __name__ == '__main__':
     dl = Download()
     par = Parse()
 
+
     # 制作列表页的url_list
     make_url_list(base_url,par.parse_main_page_get_total_pagenum(dl.download_first_page(url)))
 

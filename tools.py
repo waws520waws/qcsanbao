@@ -283,7 +283,8 @@ def download_pdf_file(url_list,r,func1,lock):
             change_success_or_fail_num(1)
             time.sleep(0.5)
             s_num, f_num = get_success_and_fail_num()
-            print(f"爬取成功了{s_num}个数据,失败了{f_num}条数据")
+            logger = get_logger()
+            logger.info("爬取成功了"+str(s_num) + "个数据,失败了"+ str(f_num) + "条数据")
     except Exception as e:
         logger = get_logger()
         logger.info("解析失败" + traceback.format_exc().replace("\n", " "))

@@ -290,13 +290,3 @@ def download_pdf_file(url_list,r,func1,lock):
         logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
         change_success_or_fail_num(0)
         download_pdf_file(url_list, r, func1, lock)
-
-
-
-
-
-
-
-
-
-

@@ -92,13 +92,26 @@ def make_store_html_dir(first_dir = configs["first_dir"],sec_dir = configs["sec_
         os.mkdir(sec_dir_path)
     return html_store_path
 
-def make_store_detail_html_dir(detail_dir):
+
+def make_store_data_html_dir(thrid_dir = configs["thrid_dir"]):
     """
-    在上面的二级目录的基础上完成第三级目录的创建
-    :param detail_dir: 第三级的目录
+    在上面的三级目录的基础上完成第四级目录的创建
+    :param thrid_dir: 第三级的目录
     :return: 第三级目录的详细的地址
     """
-    detail_dir_path = os.path.join(make_store_html_dir(), detail_dir)
+    data_dir_path = os.path.join(make_store_html_dir(), thrid_dir)
+    if not os.path.exists(data_dir_path):
+        os.mkdir(data_dir_path)
+    return data_dir_path
+
+
+def make_store_detail_html_dir(detail_dir):
+    """
+    在上面的三级目录的基础上完成第四级目录的创建
+    :param detail_dir: 第四级级的目录
+    :return: 第四级目录的详细的地址
+    """
+    detail_dir_path = os.path.join(make_store_data_html_dir(), detail_dir)
     if not os.path.exists(detail_dir_path):
         os.mkdir(detail_dir_path)
     return detail_dir_path

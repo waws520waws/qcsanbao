@@ -63,6 +63,7 @@ if __name__ == '__main__':
     success_num, fail_num = get_success_and_fail_num()
 
 
+    print("爬虫进行中请稍等")
     for thread in threading_list:
         thread.start()
         if int(success_num) + int(fail_num) == 0:

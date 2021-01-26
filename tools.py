@@ -182,29 +182,36 @@ def download_and_parse_page(url_list,r,func1,func2,func3,lock):
     :param lock: 锁
     :return: 无返回
     """
-    while True:
-        count = 0
-        lock.acquire()
-        url = r.lpop(url_list)
-        lock.release()
-        if not url:
-            """
-           这个部分主要是判断一个redis的存储，是不是空，不是空，直接去取数据，应用下面的方法进行处理即可，当为空时，让整个线程进行等待，不断的扫描
-           可能再次解析到的数据，还会存储到当前的url_list中，扫描到数据继续进行处理，假设5分钟都没有扫描到数据吧，说明这个部分已经全部爬取完成，直接rerturn
-           让当前线程直接结束即可。
-           """
-            while count < 30:
-                time.sleep(10)
-                count += 1
-                url = r.lpop(url_list)
-                if url:
-                    break
-            else:
-                logger = get_logger()
-                logger.info(url_list + " 已经爬取完毕###")
-                return
-        func1(url, func2(url), r)
-        func3(url)
+    try:
+        while True:
+            count = 0
+            lock.acquire()
+            url = r.lpop(url_list)
+            lock.release()
+            if not url:
+                """
+               这个部分主要是判断一个redis的存储，是不是空，不是空，直接去取数据，应用下面的方法进行处理即可，当为空时，让整个线程进行等待，不断的扫描
+               可能再次解析到的数据，还会存储到当前的url_list中，扫描到数据继续进行处理，假设5分钟都没有扫描到数据吧，说明这个部分已经全部爬取完成，直接rerturn
+               让当前线程直接结束即可。
+               """
+                while count < 30:
+                    time.sleep(10)
+                    count += 1
+                    url = r.lpop(url_list)
+                    if url:
+                        break
+                else:
+                    logger = get_logger()
+                    logger.info(url_list + " 已经爬取完毕###")
+                    return
+            func1(url, func2(url), r)
+            func3(url)
+            time.sleep(0.5)
+    except Exception as e:
+        logger = get_logger()
+        logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
+        download_and_parse_page(url_list, r, func1, func2, func3, lock)
+
 
 
 def download_page(url_list,r,func1,lock):
@@ -216,23 +223,30 @@ def download_page(url_list,r,func1,lock):
     :param lock: 锁
     :return: 无
     """
-    while True:
-        count = 0
-        lock.acquire()
-        url = r.lpop(url_list)
-        lock.release()
-        if url is None:
-            while count < 30:
-                time.sleep(10)
-                count += 1
-                url = r.lpop(url_list)
-                if url:
-                    break
-            else:
-                logger = get_logger()
-                logger.info(url_list + " 已经爬取完毕###")
-                return
-        func1(url)
+    try:
+        while True:
+            count = 0
+            lock.acquire()
+            url = r.lpop(url_list)
+            lock.release()
+            if url is None:
+                while count < 30:
+                    time.sleep(10)
+                    count += 1
+                    url = r.lpop(url_list)
+                    if url:
+                        break
+                else:
+                    logger = get_logger()
+                    logger.info(url_list + " 已经爬取完毕###")
+                    return
+            func1(url)
+            time.sleep(0.5)
+    except Exception as e:
+        logger = get_logger()
+        logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
+        download_page(url_list, r, func1, lock)
+
 
 
 def download_pdf_file(url_list,r,func1,lock):
@@ -266,11 +280,17 @@ def download_pdf_file(url_list,r,func1,lock):
             dir = make_all_path(pdf_path_dirs[:-1])
             dst = os.path.join(dir, pdf_path_dirs[-1])
             func1(pdf_url,dst)
+            change_success_or_fail_num(1)
+            time.sleep(0.5)
+            s_num, f_num = get_success_and_fail_num()
+            print(f"爬取成功了{s_num}个数据,失败了{f_num}条数据")
     except Exception as e:
         logger = get_logger()
-        logger.info(" 解析失败" + traceback.format_exc().replace("\n", " "))
-    finally:
+        logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
+        change_success_or_fail_num(0)
         download_pdf_file(url_list, r, func1, lock)
+
+
 
 
 

@@ -47,10 +47,7 @@ class Download(object):
         except Exception as e:
             num = 0
             logger.info(url + " 爬取失败" + traceback.format_exc().replace("\n"," "))
-        finally:
-            change_success_or_fail_num(num)
-            s_num, f_num = get_success_and_fail_num()
-            print(f"爬取成功了{s_num}个数据,失败了{f_num}条数据")
+
 
 
     def write_file(self,html_store_dir,file_name,html_str):

@@ -31,9 +31,9 @@ class Parse(object):
         :param html: 首页的下载的数据
         :return: 总页数
         """
-        soup = BeautifulSoup(html, "lxml")
-        pattern = r"第1/(\d+)页"
-        all_str = str(soup.select(".dateTable")[2].select("td")[0])
+        # soup = BeautifulSoup(html, "lxml")
+        # pattern = r"第1/(\d+)页"
+        # all_str = str(soup.select(".dateTable")[2].select("td")[0])
         # return 10 if test else int(re.search(pattern, all_str, re.M | re.I).group(1))
         return test
 
@@ -48,8 +48,12 @@ class Parse(object):
         :return: None
         """
         if href_list.count("(") != 1:
-            pattern = r"totesttpc\((.+)\)"
-            href_list = re.search(pattern, href_list).group(1).split(",")
+            try:
+                pattern = r"totesttpc\((.+)\)"
+                href_list = re.search(pattern, href_list).group(1).split(",")
+            except:
+                pattern = r"totesttpn\((.+)\)"
+                href_list = re.search(pattern, href_list).group(1).split(",")
         else:
             href_list = href_list.split("(")[1].replace(")", "").split(",")
 
@@ -146,3 +150,6 @@ class Parse(object):
             except:
                 logger.info(url + " 解析失败" + traceback.format_exc().replace("\n", " "))
         return r
+
+
+

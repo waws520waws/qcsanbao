@@ -63,7 +63,7 @@ class Download(object):
         logger.info(file_name + " 已经下载完成")
 
 
-    def replace_css_file(self,html):
+    def replace_css_file(self,html,css_dir):
         """
         替换本地的css文件，给下载好的html添加样式
         :param html: html文本
@@ -72,8 +72,6 @@ class Download(object):
         soup = BeautifulSoup(html, "lxml")
         link_list = soup.select("link")
 
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        css_dir = os.path.join(base_dir, "css")
         mystyle_path = os.path.join(css_dir, "qs_mystyle_sanbao.css")
         style_path = os.path.join(css_dir, "qs_style_sanbao.css")
         page_path = os.path.join(css_dir, "qs_page_sanbao.css")
@@ -95,7 +93,7 @@ class Download(object):
         :param html: html文本
         :return: 替换好的html
         """
-        html = self.replace_css_file(html)
+        html = self.replace_css_file(html,"..\..\css")
         pattern_code = "(\"javascript:totesttpc.+ title=)"
         pattern_brand = "(\"javascript:totesttpn.+ title=)"
         href_list_brand = re.findall(pattern_brand, html)
@@ -104,7 +102,7 @@ class Download(object):
         tr_list = soup.select(".dateTable")[1].select("tr")[1:]
         brand_list = []
         code_list = []
-        data_dir = make_store_data_html_dir()
+        data_dir = ".\data"
         for tr in tr_list:
             brand_list.append(tr.select("td")[3].get_text())
             code_list.append(tr.select("td")[4].get_text())
@@ -191,10 +189,10 @@ class Download(object):
         :param html: html文本
         :return: 替换好的html
         """
-        html = self.replace_css_file(html)
+        html = self.replace_css_file(html,"..\..\..\css")
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".dateTable")[1].select("tr")[1:]
-        data_dir = make_store_data_html_dir()
+        data_dir = "..\data"
 
         for tr in tr_list:
             brand = tr.select("td")[2].get_text()
@@ -237,10 +235,10 @@ class Download(object):
         :param html: html文本
         :return: 替换好的html
         """
-        html = self.replace_css_file(html)
+        html = self.replace_css_file(html,"..\..\..\..\css")
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".formTable")[0].select("tr")[6:10]
-        data_dir = make_store_data_html_dir()
+        data_dir = ".\\"
 
         for tr in tr_list:
             try:
@@ -248,7 +246,7 @@ class Download(object):
                 info = tr.select("a")[0].get_text().strip()
                 brand = re.search("typename=(.+?)&", url, re.I).group(1)
                 code = re.search("typecode=(.+)", url, re.I).group(1)
-                html = html.replace(href, os.path.join(data_dir, brand.replace("\n", "") + "_" + code.replace("\n", ""),brand.replace("\n", "") + "_" + code.replace("\n","") + "_detail_" + info + ".html"))
+                html = html.replace(href, os.path.join(data_dir,brand.replace("\n", "") + "_" + code.replace("\n","") + "_detail_" + info + ".html"))
             except Exception as e:
                 pass
         return html
@@ -274,12 +272,13 @@ class Download(object):
         :param html: 替换的html的文本
         :return: 替换后的html文本
         """
-        html = self.replace_css_file(html)
+        html = self.replace_css_file(html,"..\..\..\..\css")
         soup = BeautifulSoup(html, "lxml")
+        html = html.replace((soup.select("base")[0].get("href")), ".\\")
         tr_list = soup.select(".tab")[0].select("tr")[1:]
 
         for tr in tr_list:
-            base_dir = os.path.abspath(os.path.dirname(__file__))
+            base_dir = "..\..\..\..\\"
             href = tr.select("td")[1].select("a")[0].get("href")
             href_dir_list = tr.select("td")[1].select("a")[0].get("href")[7:].split("/")
             for href_dir in href_dir_list:

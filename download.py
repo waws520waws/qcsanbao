@@ -160,7 +160,7 @@ class Download(object):
 
         file_name = "page" + num_str.zfill(4) + ".html"
         html_store_dir = make_store_html_dir()
-        self.write_file(html_store_dir,file_name,html_text)
+        self.write_file(html_store_dir,file_name,html_text,logger)
 
 
     def get_typename_and_codename(self,url):

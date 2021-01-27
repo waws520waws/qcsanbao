@@ -1,0 +1,119 @@
+body
+{
+    margin:0px;
+    padding:0px;
+    background-color:#ebf4ff;
+}
+.dateTable
+{
+    width:80%;
+    margin:auto;
+    border:solid 1px #9ecaed;
+    margin-top:10px;
+}
+.formTable
+{
+    
+    margin:auto;
+    border:solid 1px #9ecaed;
+   margin-top:20px;
+}
+.dateTable .tableHeadBg
+{
+    background-image:url(images/tableHeadBg.png);
+    background-repeat:repeat;
+    height:28px;
+    font-size:13px;
+    border-bottom:solid 1px #9ecaed;
+    color:#103061;
+    padding:0px;
+}
+.formTable .tableHeadBg
+{
+    background-image:url(images/tableHeadBg.png);
+    background-repeat:repeat-x;
+    height:28px;
+    font-size:13px;
+    
+}
+.tableHeadBg span
+{
+    margin-left:15px;
+}
+.trBg th
+{
+    background-image:url(images/trBg.png);
+    background-repeat:repeat-x;
+    background-position:right;
+    height:27px;
+    font-size:13px;
+    color:#0b3364;
+    border-bottom:solid 1px #9ecaed;
+}
+.tdBg td
+{
+    background-image:url(images/tdBg.png);
+    background-repeat:repeat-x;
+    height:27px;
+    font-size:13px;
+    text-align:center;
+    border-right:solid 1px #9ecaed;
+    color:#103061;
+
+}
+.colorBg{background-color:#dbe8f8;}
+.trWhiteBg td
+{
+    background-color:#fff;
+    height:27px;
+    font-size:13px;
+    text-align:center;
+    border-right:solid 1px #c5c5c5;
+    color:#103061;
+    border-bottom:solid 1px #9ecaed;
+    border-top:solid 1px #9ecaed;
+}
+.tdBg .lastOne
+{
+    border-right:0px;
+}
+.trWhiteBg .lastOne
+{
+    border-right:0px;
+}
+
+.firstTr td
+{
+    border-top:solid 1px #9ecaed;
+}
+.secondTr td
+{
+     border-top:solid 1px #9ecaed;
+}
+.formTable td
+{
+  
+    font-size:13px;
+    color:#103061;
+}
+.formTable .first
+{
+    background-image:url(images/bdBg.png);
+    background-repeat:repeat-x;
+    height:34px;
+    border-right:solid 1px #9ecaed;
+    font-size:13px;
+    color:#103061;
+    
+}
+
+.firstTr td
+{
+    border-right:solid 1px #9ecaed;
+    text-align:center;
+}
+.secondTr td
+{
+    border-right:solid 1px #9ecaed;
+    text-align:center;
+}

@@ -1,0 +1,27 @@
+body
+{
+    padding:0px;
+    margin:0px;
+}
+.topBg
+{
+    background-image:url(images/topBg.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:100px;
+}
+.logoBg
+{
+    background-image:url(images/logoBg.png);
+    background-repeat:no-repeat;
+    width:831px;
+    height:100px;
+    float:left;
+}
+.bottom
+{
+    background-image:url(images/bottom.png);
+    background-repeat:repeat-x;
+    width:100%;
+    height:80px;
+}

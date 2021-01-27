@@ -16,7 +16,7 @@
 import requests
 import os
 from tqdm import tqdm
-from tools import change_success_or_fail_num,get_success_and_fail_num,get_logger,make_store_html_dir,make_store_detail_html_dir
+from tools import change_success_or_fail_num,get_success_and_fail_num,get_logger,make_store_html_dir,make_store_detail_html_dir,make_store_data_html_dir
 import traceback
 from bs4 import BeautifulSoup
 from parse import Parse
@@ -64,6 +64,59 @@ class Download(object):
         logger.info(file_name + " 已经下载完成")
 
 
+    def replace_css_file(self,html):
+        """
+        替换本地的css文件，给下载好的html添加样式
+        :param html: html文本
+        :return: 替换好的html
+        """
+        soup = BeautifulSoup(html, "lxml")
+        link_list = soup.select("link")
+
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        css_dir = os.path.join(base_dir, "css")
+        mystyle_path = os.path.join(css_dir, "qs_mystyle_sanbao.css")
+        style_path = os.path.join(css_dir, "qs_style_sanbao.css")
+        page_path = os.path.join(css_dir, "qs_page_sanbao.css")
+
+        for i, link in enumerate(link_list):
+            href = link.get("href")
+            if i == 0:
+                html = html.replace(href, mystyle_path)
+            elif i == 1:
+                html = html.replace(href, style_path)
+            else:
+                html = html.replace(href, page_path)
+        return html
+
+
+    def replace_brand_and_code_url(self,html):
+        """
+        替换本地的brand的html文件和code的html文件的链接
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
+        pattern_code = "(\"javascript:totesttpc.+ title=)"
+        pattern_brand = "(\"javascript:totesttpn.+ title=)"
+        href_list_brand = re.findall(pattern_brand, html)
+        href_list_code = re.findall(pattern_code, html)
+        soup = BeautifulSoup(html, "lxml")
+        tr_list = soup.select(".dateTable")[1].select("tr")[1:]
+        brand_list = []
+        code_list = []
+        data_dir = make_store_data_html_dir()
+        for tr in tr_list:
+            brand_list.append(tr.select("td")[3].get_text())
+            code_list.append(tr.select("td")[4].get_text())
+
+        for i, href in enumerate(href_list_brand):
+            html = html.replace(href[1:-8], os.path.join(data_dir, brand_list[i].replace("\n", "") + ".html"))
+
+        for i, href in enumerate(href_list_code):
+            html = html.replace(href[1:-8], os.path.join(data_dir,brand_list[i].replace("\n", "") + "_" + code_list[i].replace("\n", "") + ".html"))
+        return html
+
     def download_list_page_html(self,url):
         """
         下载列表页的html文件，主要在这个地方需要做一件事：完成存储在同一级目录下的文件之间可以完成首页、上页、下页、末页的切换的功能
@@ -76,6 +129,7 @@ class Download(object):
         par = Parse()
         total_page = str(par.parse_main_page_get_total_pagenum(html.text,configs["test"]))
 
+        # 这个部分是首页、上页、下页、末页的切换
         pattern_fpage = "id=\"fpage\" href=\"(.+?)\""
         pattern_upage = "id=\"upage\" href=\"(.+?)\""
         pattern_npage = "id=\"npage\" href=\"(.+?)\""
@@ -100,6 +154,11 @@ class Download(object):
             html_text = html_text.replace(upage_str, "./page" + str(int(num_str) - 1).zfill(4) + ".html")
             html_text = html_text.replace(npage_str, "./page"+ str(int(num_str)+1).zfill(4)+".html")
             html_text = html_text.replace(epage_str, "./page"+ total_page.zfill(4)+".html")
+
+
+        # 这个部分是品牌和code数据链接的切换
+        html_text = self.replace_brand_and_code_url(html_text)
+
         file_name = "page" + num_str.zfill(4) + ".html"
         html_store_dir = make_store_html_dir()
         self.write_file(html_store_dir,file_name,html_text)
@@ -127,6 +186,24 @@ class Download(object):
         type_name = re.search(name_pattern, url,re.I).group(1)
         return type_name
 
+    def replace_code_url(self,html):
+        """
+        替换本地的code的跳转的code_detail的详情html文件的链接
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
+        soup = BeautifulSoup(html, "lxml")
+        tr_list = soup.select(".dateTable")[1].select("tr")[1:]
+        data_dir = make_store_data_html_dir()
+
+        for tr in tr_list:
+            brand = tr.select("td")[2].get_text()
+            code = tr.select("td")[3].get_text()
+            href = tr.select("td")[7].select("a")[0].get("href")
+            html = html.replace(href, os.path.join(data_dir,brand.replace("\n", "") + "_" + code.replace("\n","") ,brand.replace("\n", "") + "_" + code.replace("\n","") + "_detail" + ".html"))
+        return html
+
     def download_code_page(self,url):
         """
         下载code详情页的html文件
@@ -136,8 +213,9 @@ class Download(object):
         html = requests.get(url, headers=self.headers)
         type_name,code_name = self.get_typename_and_codename(url)
         file_name = type_name + "_" + code_name + ".html"
-        html_store_dir = make_store_html_dir()
-        self.write_file(html_store_dir,file_name,html.text)
+        html_store_dir = make_store_data_html_dir()
+        html_text = self.replace_code_url(html.text)
+        self.write_file(html_store_dir,file_name,html_text)
 
     def download_brand_page(self,url):
         """
@@ -148,8 +226,34 @@ class Download(object):
         html = requests.get(url, headers=self.headers)
         type_name= self.get_typename(url)
         file_name = type_name + ".html"
-        html_store_dir = make_store_html_dir()
-        self.write_file(html_store_dir,file_name,html.text)
+        html_store_dir = make_store_data_html_dir()
+        html_text = self.replace_code_url(html.text)
+        self.write_file(html_store_dir,file_name,html_text)
+
+
+    def replace_sanbao_info_url(self,url,html):
+        """
+        替换本地的pdf下载的详情html文件的链接
+        :param url: 访问三包信息页面的url
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
+        soup = BeautifulSoup(html, "lxml")
+        tr_list = soup.select(".formTable")[0].select("tr")[6:10]
+        data_dir = make_store_data_html_dir()
+
+        for tr in tr_list:
+            try:
+                href = tr.select("a")[0].get("href")
+                info = tr.select("a")[0].get_text().strip()
+                brand = re.search("typename=(.+?)&", url, re.I).group(1)
+                code = re.search("typecode=(.+)", url, re.I).group(1)
+                html = html.replace(href, os.path.join(data_dir, brand.replace("\n", "") + "_" + code.replace("\n", ""),brand.replace("\n", "") + "_" + code.replace("\n","") + "_detail_" + info + ".html"))
+            except Exception as e:
+                pass
+        return html
+
 
     def download_sanbao_detail_page(self,url):
         """
@@ -161,8 +265,28 @@ class Download(object):
         type_name, code_name = self.get_typename_and_codename(url)
         file_name = type_name + "_" + code_name + "_detail.html"
         html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
-        self.write_file(html_store_dir, file_name, html.text)
+        html_text = self.replace_sanbao_info_url(url,html.text)
+        self.write_file(html_store_dir, file_name, html_text)
 
+
+    def replace_pdf_url(self,html):
+        """
+        替换本地的pdf文件的链接
+        :param html: 替换的html的文本
+        :return: 替换后的html文本
+        """
+        html = self.replace_css_file(html)
+        soup = BeautifulSoup(html, "lxml")
+        tr_list = soup.select(".tab")[0].select("tr")[1:]
+
+        for tr in tr_list:
+            base_dir = os.path.abspath(os.path.dirname(__file__))
+            href = tr.select("td")[1].select("a")[0].get("href")
+            href_dir_list = tr.select("td")[1].select("a")[0].get("href")[7:].split("/")
+            for href_dir in href_dir_list:
+                base_dir = os.path.join(base_dir, href_dir)
+            html = html.replace(href, base_dir)
+        return html
 
 
     def download_sanbao_pdf_detail_page(self, pdf_url):
@@ -175,7 +299,8 @@ class Download(object):
         html = requests.get(url, headers=self.headers)
         file_name = type_name + "_" + code_name + "_detail_" + info + ".html"
         html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
-        self.write_file(html_store_dir, file_name, html.text)
+        html_text = self.replace_pdf_url(html.text)
+        self.write_file(html_store_dir, file_name, html_text)
 
     def download_pdf_without_tqdm(self,url):
         """
@@ -224,9 +349,3 @@ class Download(object):
         pbar.close()
         logger.info(url + " 文件已经下载完成")
         return True
-
-
-
-
-
-

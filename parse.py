@@ -18,10 +18,8 @@
 """
 from bs4 import BeautifulSoup
 import re
-from tools import get_logger
 import traceback
 
-logger = get_logger()
 
 
 class Parse(object):
@@ -70,7 +68,7 @@ class Parse(object):
 
 
 
-    def parse_main_page_get_detail_page_url(self,url,html,r):
+    def parse_main_page_get_detail_page_url(self,url,html,r,logger):
         """
         解析页面，获取name页的下载url，获取code页的下载url
         :param url: 详情页的url，主要用于打印日志定位问题
@@ -94,7 +92,7 @@ class Parse(object):
         finally:
             return r
 
-    def parse_detail_page_get_url(self,url,html,r):
+    def parse_detail_page_get_url(self,url,html,r,logger):
         """
         解析页面，获取三包信息的下载url,存储在redis中
         :param url: 详情页的url，主要用于打印日志定位问题
@@ -115,7 +113,7 @@ class Parse(object):
             return r
 
 
-    def parse_detail_page_get_pdf_url(self,url,html,r):
+    def parse_detail_page_get_pdf_url(self,url,html,r,logger):
         """
         解析页面，获取pdf的下载url,存储在redis中
         :param url: 详情页的url，主要用于打印日志定位问题

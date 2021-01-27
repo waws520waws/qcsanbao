@@ -23,7 +23,6 @@ from parse import Parse
 import re
 from config import configs
 
-logger = get_logger()
 
 class Download(object):
     def __init__(self):
@@ -32,7 +31,7 @@ class Download(object):
             'Connection': 'close'
         }
 
-    def download_first_page(self,url):
+    def download_first_page(self,url,logger):
         """
         下载页面，获取html文本
         :param url: 想要下载的html页面数据的url
@@ -50,7 +49,7 @@ class Download(object):
 
 
 
-    def write_file(self,html_store_dir,file_name,html_str):
+    def write_file(self,html_store_dir,file_name,html_str,logger):
         """
         将获取的html的文本写入到.html文件中
         :param html_store_dir: html的存放路径
@@ -117,7 +116,7 @@ class Download(object):
             html = html.replace(href[1:-8], os.path.join(data_dir,brand_list[i].replace("\n", "") + "_" + code_list[i].replace("\n", "") + ".html"))
         return html
 
-    def download_list_page_html(self,url):
+    def download_list_page_html(self,url,logger):
         """
         下载列表页的html文件，主要在这个地方需要做一件事：完成存储在同一级目录下的文件之间可以完成首页、上页、下页、末页的切换的功能
         :param url: 列表页的url
@@ -204,7 +203,7 @@ class Download(object):
             html = html.replace(href, os.path.join(data_dir,brand.replace("\n", "") + "_" + code.replace("\n","") ,brand.replace("\n", "") + "_" + code.replace("\n","") + "_detail" + ".html"))
         return html
 
-    def download_code_page(self,url):
+    def download_code_page(self,url,logger):
         """
         下载code详情页的html文件
         :param url: code详情页的url
@@ -215,9 +214,9 @@ class Download(object):
         file_name = type_name + "_" + code_name + ".html"
         html_store_dir = make_store_data_html_dir()
         html_text = self.replace_code_url(html.text)
-        self.write_file(html_store_dir,file_name,html_text)
+        self.write_file(html_store_dir,file_name,html_text,logger)
 
-    def download_brand_page(self,url):
+    def download_brand_page(self,url,logger):
         """
         下载name详情页的html文件
         :param url: name详情页的url
@@ -228,7 +227,7 @@ class Download(object):
         file_name = type_name + ".html"
         html_store_dir = make_store_data_html_dir()
         html_text = self.replace_code_url(html.text)
-        self.write_file(html_store_dir,file_name,html_text)
+        self.write_file(html_store_dir,file_name,html_text,logger)
 
 
     def replace_sanbao_info_url(self,url,html):
@@ -255,7 +254,7 @@ class Download(object):
         return html
 
 
-    def download_sanbao_detail_page(self,url):
+    def download_sanbao_detail_page(self,url,logger):
         """
         下载三包详情页的html文件
         :param url: 三包详情页的url
@@ -266,7 +265,7 @@ class Download(object):
         file_name = type_name + "_" + code_name + "_detail.html"
         html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
         html_text = self.replace_sanbao_info_url(url,html.text)
-        self.write_file(html_store_dir, file_name, html_text)
+        self.write_file(html_store_dir, file_name, html_text,logger)
 
 
     def replace_pdf_url(self,html):
@@ -289,7 +288,7 @@ class Download(object):
         return html
 
 
-    def download_sanbao_pdf_detail_page(self, pdf_url):
+    def download_sanbao_pdf_detail_page(self, pdf_url,logger):
         """
         下载三包pdf下载详情页的html文件
         :param url: pdf下载详情页的url
@@ -300,7 +299,7 @@ class Download(object):
         file_name = type_name + "_" + code_name + "_detail_" + info + ".html"
         html_store_dir = make_store_detail_html_dir(type_name + "_" + code_name)
         html_text = self.replace_pdf_url(html.text)
-        self.write_file(html_store_dir, file_name, html_text)
+        self.write_file(html_store_dir, file_name, html_text,logger)
 
     def download_pdf_without_tqdm(self,url):
         """
@@ -318,7 +317,7 @@ class Download(object):
             for data in html.iter_content():
                 file.write(data)
 
-    def down_pdf_with_tqdm(self,url,dst):
+    def down_pdf_with_tqdm(self,url,dst,logger):
         """
         下载pdf,带有进度条的方式
         :param url: pdf的下载的url地址

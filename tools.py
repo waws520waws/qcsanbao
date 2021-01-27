@@ -17,9 +17,7 @@ from config import configs
 import os
 import hashlib
 import logging
-from threading import Thread
 import pymysql
-from threading import Lock
 import time
 import traceback
 
@@ -184,7 +182,7 @@ def get_mysql_connect():
     return cursor
 
 
-def download_and_parse_page(url_list,r,func1,func2,func3,lock):
+def download_and_parse_page(url_list,r,func1,func2,func3,lock,logger):
     """
     根据指定链接，解析并下载对应的html文件，并且将相关的url链接存储到redis中
     :param url_list: 字符串，待爬取的redis中存储的url_list
@@ -214,20 +212,18 @@ def download_and_parse_page(url_list,r,func1,func2,func3,lock):
                     if url:
                         break
                 else:
-                    logger = get_logger()
                     logger.info(url_list + " 已经爬取完毕###")
                     return
-            func1(url, func2(url), r)
-            func3(url)
+            func1(url, func2(url,logger),r,logger)
+            func3(url,logger)
             time.sleep(0.5)
     except Exception as e:
-        logger = get_logger()
         logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
-        download_and_parse_page(url_list, r, func1, func2, func3, lock)
+        download_and_parse_page(url_list, r, func1, func2, func3, lock,logger)
 
 
 
-def download_page(url_list,r,func1,lock):
+def download_page(url_list,r,func1,lock,logger):
     """
     根据指定链接，下载对应的html文件
     :param url_list: 字符串，待爬取的redis中存储的url_list
@@ -250,19 +246,17 @@ def download_page(url_list,r,func1,lock):
                     if url:
                         break
                 else:
-                    logger = get_logger()
                     logger.info(url_list + " 已经爬取完毕###")
                     return
-            func1(url)
+            func1(url,logger)
             time.sleep(0.5)
     except Exception as e:
-        logger = get_logger()
         logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
-        download_page(url_list, r, func1, lock)
+        download_page(url_list, r, func1, lock,logger)
 
 
 
-def download_pdf_file(url_list,r,func1,lock):
+def download_pdf_file(url_list,r,func1,lock,logger):
     """
     根据指定链接，下载pdf文件
     :param url_list: 字符串，待爬取的redis中存储的url_list
@@ -285,21 +279,18 @@ def download_pdf_file(url_list,r,func1,lock):
                     if pdf_url:
                         break
                 else:
-                    logger = get_logger()
                     logger.info(url_list + " 已经爬取完毕###")
                     return
             pdf_url_path = pdf_url[8:]
             pdf_path_dirs = pdf_url_path.split("/")
             dir = make_all_path(pdf_path_dirs[:-1])
             dst = os.path.join(dir, pdf_path_dirs[-1])
-            func1(pdf_url,dst)
+            func1(pdf_url,dst,logger)
             change_success_or_fail_num(1)
             time.sleep(0.5)
             s_num, f_num = get_success_and_fail_num()
-            logger = get_logger()
             logger.info("爬取成功了"+str(s_num) + "个数据,失败了"+ str(f_num) + "条数据")
     except Exception as e:
-        logger = get_logger()
         logger.info("解析失败" + traceback.format_exc().replace("\n", " "))
         change_success_or_fail_num(0)
-        download_pdf_file(url_list, r, func1, lock)
+        download_pdf_file(url_list, r, func1, lock,logger)

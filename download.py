@@ -64,7 +64,39 @@ class Download(object):
         logger.info(file_name + " 已经下载完成")
 
 
+    def replace_css_file(self,html):
+        """
+        替换本地的css文件，给下载好的html添加样式
+        :param html: html文本
+        :return: 替换好的html
+        """
+        soup = BeautifulSoup(html, "lxml")
+        link_list = soup.select("link")
+
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        css_dir = os.path.join(base_dir, "css")
+        mystyle_path = os.path.join(css_dir, "qs_mystyle_sanbao.css")
+        style_path = os.path.join(css_dir, "qs_style_sanbao.css")
+        page_path = os.path.join(css_dir, "qs_page_sanbao.css")
+
+        for i, link in enumerate(link_list):
+            href = link.get("href")
+            if i == 0:
+                html = html.replace(href, mystyle_path)
+            elif i == 1:
+                html = html.replace(href, style_path)
+            else:
+                html = html.replace(href, page_path)
+        return html
+
+
     def replace_brand_and_code_url(self,html):
+        """
+        替换本地的brand的html文件和code的html文件的链接
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
         pattern_code = "(\"javascript:totesttpc.+ title=)"
         pattern_brand = "(\"javascript:totesttpn.+ title=)"
         href_list_brand = re.findall(pattern_brand, html)
@@ -155,6 +187,12 @@ class Download(object):
         return type_name
 
     def replace_code_url(self,html):
+        """
+        替换本地的code的跳转的code_detail的详情html文件的链接
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".dateTable")[1].select("tr")[1:]
         data_dir = make_store_data_html_dir()
@@ -194,6 +232,13 @@ class Download(object):
 
 
     def replace_sanbao_info_url(self,url,html):
+        """
+        替换本地的pdf下载的详情html文件的链接
+        :param url: 访问三包信息页面的url
+        :param html: html文本
+        :return: 替换好的html
+        """
+        html = self.replace_css_file(html)
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".formTable")[0].select("tr")[6:10]
         data_dir = make_store_data_html_dir()
@@ -225,6 +270,12 @@ class Download(object):
 
 
     def replace_pdf_url(self,html):
+        """
+        替换本地的pdf文件的链接
+        :param html: 替换的html的文本
+        :return: 替换后的html文本
+        """
+        html = self.replace_css_file(html)
         soup = BeautifulSoup(html, "lxml")
         tr_list = soup.select(".tab")[0].select("tr")[1:]
 
@@ -298,9 +349,3 @@ class Download(object):
         pbar.close()
         logger.info(url + " 文件已经下载完成")
         return True
-
-
-
-
-
-
